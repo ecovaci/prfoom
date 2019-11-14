@@ -91,9 +91,7 @@ class CustomProxyClient {
         this.reuseStrategy = new DefaultConnectionReuseStrategy();
         this.authSchemeRegistry = RegistryBuilder.<AuthSchemeProvider>create()
                 .register(AuthSchemes.NTLM, new NTLMSchemeFactory())
-                .register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory()) // FIXME Are all needed?
-                .register(AuthSchemes.DIGEST, new DigestSchemeFactory())
-                .register(AuthSchemes.BASIC, new BasicSchemeFactory()).build();
+                .build();
     }
 
     // FIXME Handle connection.close() properly

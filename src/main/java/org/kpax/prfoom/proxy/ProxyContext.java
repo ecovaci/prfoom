@@ -98,7 +98,7 @@ public class ProxyContext implements Closeable {
 
     public void start() {
         this.credentialsProvider = createCredentialsProvider();
-}
+    }
 
     public CloseableHttpClient getHttpClientBuilder(boolean retries) {
         HttpClientBuilder builder = HttpClients.custom().useSystemProperties()
@@ -137,10 +137,7 @@ public class ProxyContext implements Closeable {
                     logger.info("Create proxy request config");
                     HttpHost proxy = new HttpHost(userConfig.getProxyHost(), userConfig.getProxyPort());
                     List<String> proxyPreferredAuthSchemes = new ArrayList<>();
-                    proxyPreferredAuthSchemes.add(AuthSchemes.SPNEGO);
                     proxyPreferredAuthSchemes.add(AuthSchemes.NTLM);
-                    proxyPreferredAuthSchemes.add(AuthSchemes.DIGEST);
-                    proxyPreferredAuthSchemes.add(AuthSchemes.BASIC);
                     proxyRequestConfig = RequestConfig.custom()
                             .setProxy(proxy)
                             .setProxyPreferredAuthSchemes(proxyPreferredAuthSchemes)
