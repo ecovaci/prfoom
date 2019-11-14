@@ -14,11 +14,6 @@
 
 package org.kpax.prfoom;
 
-import java.awt.EventQueue;
-import java.awt.Font;
-
-import javax.swing.UIManager;
-
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -32,6 +27,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import javax.swing.*;
+import java.awt.*;
+
 /**
  * @author Eugen Covaci
  */
@@ -39,65 +37,65 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan(basePackages = "org.kpax.prfoom")
 public class Application {
 
-	private static final Logger logger = LoggerFactory.getLogger(Application.class);
+    private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
-	@Bean
-	FileBasedConfigurationBuilder<PropertiesConfiguration> userConfigurationBuilder() {
-		return new Configurations()
-				.propertiesBuilder(LocalIOUtils.toPath(System.getProperty("user.dir"), "config",
-						"user.properties"));
-	}
+    public static void main(String[] args) {
 
-	@Bean
-	Font globalFont(UiConfig uiConfig) {
-		return new Font("Dialog", Font.BOLD,
-				uiConfig.getFontSize());
-	}
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to set Nimbus L&F, let the default look and feel.", e);
+        }
 
-	public static void main(String[] args) {
+        UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.BOLD, 13));
 
-		try {
-			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		} catch (Exception e) {
-			logger.warn("Failed to set Nimbus L&F, let the default look and feel.", e);
-		}
+        try {
+            AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(Application.class);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                logger.info("Close Spring's context");
+                context.close();
+                logger.info("The application is shut down!");
+            }));
+            Font globalFont = context.getBean(Font.class);
+            // Some global font settings
+            SwingUtils.setFontSettings(globalFont);
 
-		UIManager.put("OptionPane.messageFont", new Font("Dialog", Font.BOLD, 13));
+            final AppFrame frame = context.getBean(AppFrame.class);
+            EventQueue.invokeLater(() -> {
+                try {
+                    SwingUtils.setFont(frame, globalFont);
+                    frame.pack();
+                    frame.setLocationRelativeTo(null);
+                    frame.setVisible(true);
+                    frame.handleFocus();
+                } catch (Exception e) {
+                    logger.error("GUI error", e);
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Error on starting Spring context", e);
+            SwingUtils.showErrorMessage("Cannot initialize application's context!" +
+                    "\nSee the log file for details");
+        }
 
-		try {
-			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(Application.class);
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-				logger.info("Close Spring's context");
-				context.close();
-				logger.info("The application is shut down!");
-			}));
-			Font globalFont = context.getBean(Font.class);
-			// Some global font settings
-			SwingUtils.setFontSettings(globalFont);
+    }
 
-			final AppFrame frame = context.getBean(AppFrame.class);
-			EventQueue.invokeLater(() -> {
-				try {
-					SwingUtils.setFont(frame, globalFont);
-					frame.pack();
-					frame.setLocationRelativeTo(null);
-					frame.setVisible(true);
-					frame.handleFocus();
-				} catch (Exception e) {
-					logger.error("GUI error", e);
-				}
-			});
-		} catch (Exception e) {
-			logger.error("Error on starting Spring context", e);
-			SwingUtils.showErrorMessage("Cannot initialize application's context!" +
-					"\nSee the log file for details");
-		}
+    @Bean
+    FileBasedConfigurationBuilder<PropertiesConfiguration> userConfigurationBuilder() {
+        return new Configurations()
+                .propertiesBuilder(LocalIOUtils.toPath(System.getProperty("user.dir"), "config",
+                        "user.properties"));
+    }
 
-	}
+    @Bean
+    Font globalFont(UiConfig uiConfig) {
+        return new Font("Dialog", Font.BOLD,
+                uiConfig.getFontSize());
+    }
 
 }

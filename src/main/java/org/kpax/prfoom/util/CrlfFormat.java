@@ -19,16 +19,16 @@ package org.kpax.prfoom.util;
  */
 public final class CrlfFormat {
 
-	public static final String CRLF = "\r\n";
+    public static final String CRLF = "\r\n";
 
-	private CrlfFormat() {
-	}
+    private CrlfFormat() {
+    }
 
-	public static byte[] crlf(String input) {
-		if (input != null) {
-			return (input + CRLF).getBytes();
-		}
-		return CRLF.getBytes();
-	}
+    public static byte[] crlf(String input) {
+        if (input != null) {
+            return (input + CRLF).getBytes();
+        }
+        return CRLF.getBytes();
+    }
 
 }

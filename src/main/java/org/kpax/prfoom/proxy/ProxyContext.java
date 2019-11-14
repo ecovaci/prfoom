@@ -96,10 +96,6 @@ public class ProxyContext implements Closeable {
         logger.info("Done proxy context's initialization");
     }
 
-    public void start() {
-        this.credentialsProvider = createCredentialsProvider();
-    }
-
     public CloseableHttpClient getHttpClientBuilder(boolean retries) {
         HttpClientBuilder builder = HttpClients.custom().useSystemProperties()
                 .setDefaultCredentialsProvider(getCredentialsProvider())
@@ -165,14 +161,16 @@ public class ProxyContext implements Closeable {
         return socketConfig;
     }
 
-    private CredentialsProvider createCredentialsProvider() {
-        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY,
-                new NTCredentials(userConfig.getUsername(), userConfig.getPassword(), null, userConfig.getDomain()));
-        return credentialsProvider;
-    }
-
     public CredentialsProvider getCredentialsProvider() {
+        if (credentialsProvider == null) {
+            synchronized (this) {
+                if (credentialsProvider == null) {
+                    credentialsProvider = new BasicCredentialsProvider();
+                    credentialsProvider.setCredentials(AuthScope.ANY,
+                            new NTCredentials(userConfig.getUsername(), userConfig.getPassword(), null, userConfig.getDomain()));
+                }
+            }
+        }
         return credentialsProvider;
     }
 

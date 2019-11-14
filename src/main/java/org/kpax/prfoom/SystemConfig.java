@@ -14,16 +14,15 @@
 
 package org.kpax.prfoom;
 
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
-
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 /**
  * @author Eugen Covaci
@@ -31,83 +30,83 @@ import org.springframework.stereotype.Component;
 @Component
 @PropertySource("file:${user.dir}/config/system.properties")
 public class SystemConfig {
-	
-	private static final Logger logger = LoggerFactory.getLogger(SystemConfig.class);
 
-	@Value("${max.connections.per.route}")
-	private Integer maxConnectionsPerRoute;
+    private static final Logger logger = LoggerFactory.getLogger(SystemConfig.class);
 
-	@Value("${max.connections}")
-	private Integer maxConnections;
+    @Value("${max.connections.per.route}")
+    private Integer maxConnectionsPerRoute;
 
-	@Value("${eviction.period}")
-	private Integer evictionPeriod;
+    @Value("${max.connections}")
+    private Integer maxConnections;
 
-	@Value("${max.connection.idle}")
-	private Integer maxConnectionIdle;
+    @Value("${eviction.period}")
+    private Integer evictionPeriod;
 
-	@Value("${server.socket.buffer.size}")
-	private Integer serverSocketBufferSize;
+    @Value("${max.connection.idle}")
+    private Integer maxConnectionIdle;
 
-	@Value("${socket.buffer.size}")
-	private Integer socketBufferSize;
+    @Value("${server.socket.buffer.size}")
+    private Integer serverSocketBufferSize;
 
-	@Value("${repeats.on.failure}")
-	private Integer repeatsOnFailure;
+    @Value("${socket.buffer.size}")
+    private Integer socketBufferSize;
 
-	@Value("${eviction.enabled}")
-	private boolean evictionEnabled;
+    @Value("${repeats.on.failure}")
+    private Integer repeatsOnFailure;
 
-	private String releaseVersion;
+    @Value("${eviction.enabled}")
+    private boolean evictionEnabled;
 
-	@PostConstruct
-	public void init() {
-		try {
-			logger.info("Get application version from manifest file");
-			releaseVersion = new Manifest(Application.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
-					.getMainAttributes()
-					.get(Attributes.Name.IMPLEMENTATION_VERSION).toString();
-		} catch (Exception e) {
-			releaseVersion = "Unknown";
-			logger.warn("Error on getting application version", e);
+    private String releaseVersion;
 
-		}
-	}
+    @PostConstruct
+    public void init() {
+        try {
+            logger.info("Get application version from manifest file");
+            releaseVersion = new Manifest(Application.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
+                    .getMainAttributes()
+                    .get(Attributes.Name.IMPLEMENTATION_VERSION).toString();
+        } catch (Exception e) {
+            releaseVersion = "Unknown";
+            logger.warn("Error on getting application version", e);
 
-	public Integer getMaxConnectionsPerRoute() {
-		return maxConnectionsPerRoute;
-	}
+        }
+    }
 
-	public Integer getMaxConnections() {
-		return maxConnections;
-	}
+    public Integer getMaxConnectionsPerRoute() {
+        return maxConnectionsPerRoute;
+    }
 
-	public Integer getEvictionPeriod() {
-		return evictionPeriod;
-	}
+    public Integer getMaxConnections() {
+        return maxConnections;
+    }
 
-	public Integer getServerSocketBufferSize() {
-		return serverSocketBufferSize;
-	}
+    public Integer getEvictionPeriod() {
+        return evictionPeriod;
+    }
 
-	public Integer getSocketBufferSize() {
-		return socketBufferSize;
-	}
+    public Integer getServerSocketBufferSize() {
+        return serverSocketBufferSize;
+    }
 
-	public Integer getRepeatsOnFailure() {
-		return repeatsOnFailure;
-	}
+    public Integer getSocketBufferSize() {
+        return socketBufferSize;
+    }
 
-	public Integer getMaxConnectionIdle() {
-		return maxConnectionIdle;
-	}
+    public Integer getRepeatsOnFailure() {
+        return repeatsOnFailure;
+    }
 
-	public boolean isEvictionEnabled() {
-		return evictionEnabled;
-	}
+    public Integer getMaxConnectionIdle() {
+        return maxConnectionIdle;
+    }
 
-	public String getReleaseVersion() {
-		return releaseVersion;
-	}
+    public boolean isEvictionEnabled() {
+        return evictionEnabled;
+    }
+
+    public String getReleaseVersion() {
+        return releaseVersion;
+    }
 
 }

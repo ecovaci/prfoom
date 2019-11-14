@@ -19,30 +19,32 @@ import java.util.function.Predicate;
 
 /**
  * Repeats a {@link Supplier#get()} until a condition is fulfilled.
- * @author Eugen Covaci
+ *
  * @param <R>
+ * @author Eugen Covaci
  */
 public class CloseableRepeater<R extends Closeable> {
 
-	/**
-	 * Repeats the {@link Supplier#get()} until the stop condition becomes <code>true</code>.
-	 * @param action The supplier to be repeated.
-	 * @param until The stop condition.
-	 * @param times The maximum repeat times.
-	 * @return The result.
-	 * @throws Exception
-	 */
-	public R repeat(Supplier<R> action, Predicate<R> until, int times) throws Exception {
-		R r = null;
-		for (int i = 0; i < times; i++) {
-			r = action.get();
-			if (until.test(r)) {
-				break;
-			} else {
-				LocalIOUtils.closeQuietly(r);
-			}
-		}
-		return r;
-	}
+    /**
+     * Repeats the {@link Supplier#get()} until the stop condition becomes <code>true</code>.
+     *
+     * @param action The supplier to be repeated.
+     * @param until  The stop condition.
+     * @param times  The maximum repeat times.
+     * @return The result.
+     * @throws Exception
+     */
+    public R repeat(Supplier<R> action, Predicate<R> until, int times) throws Exception {
+        R r = null;
+        for (int i = 0; i < times; i++) {
+            r = action.get();
+            if (until.test(r)) {
+                break;
+            } else {
+                LocalIOUtils.closeQuietly(r);
+            }
+        }
+        return r;
+    }
 
 }

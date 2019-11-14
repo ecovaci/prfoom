@@ -14,8 +14,6 @@
 
 package org.kpax.prfoom;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -26,6 +24,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 /**
  * @author Eugen Covaci
  */
@@ -33,102 +33,110 @@ import org.springframework.stereotype.Component;
 @PropertySource(value = "file:${user.dir}/config/user.properties", name = "userProperties")
 public class UserConfig {
 
-	@Autowired
-	private FileBasedConfigurationBuilder<PropertiesConfiguration> propertiesBuilder;
+    @Autowired
+    private FileBasedConfigurationBuilder<PropertiesConfiguration> propertiesBuilder;
 
-	@Value("${proxy.username}")
-	private String username;
+    @Value("${proxy.username}")
+    private String username;
 
-	private String password;
+    private String password;
 
-	@Value("${proxy.domain}")
-	private String domain;
+    @Value("${proxy.domain}")
+    private String domain;
 
-	@Value("${local.port:3129}")
-	private int localPort;
+    @Value("${local.port:3129}")
+    private int localPort;
 
-	@Value("${proxy.host:localhost}")
-	private String proxyHost;
+    @Value("${proxy.host:localhost}")
+    private String proxyHost;
 
-	@Value("${proxy.port:80}")
-	private int proxyPort;
+    @Value("${proxy.test.url}")
+    private String proxyTestUrl;
 
-	@PostConstruct
-	public void init() {
-		if (StringUtils.isEmpty(username)) {
-			username = System.getProperty("user.name");
-		}
-		if (StringUtils.isEmpty(domain)) {
-			boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-			if (isWindows) {
-				domain = System.getenv("USERDOMAIN");
-			}
-		}
+    @Value("${proxy.port:80}")
+    private int proxyPort;
 
-	}
+    @PostConstruct
+    public void init() {
+        if (StringUtils.isEmpty(username)) {
+            username = System.getProperty("user.name");
+        }
+        if (StringUtils.isEmpty(domain)) {
+            boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+            if (isWindows) {
+                domain = System.getenv("USERDOMAIN");
+            }
+        }
 
-	public String getUsername() {
-		return username;
-	}
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public String getDomain() {
-		return domain;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public String getDomain() {
+        return domain;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
 
-	public int getLocalPort() {
-		return localPort;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public String getProxyHost() {
-		return proxyHost;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public int getProxyPort() {
-		return proxyPort;
-	}
+    public int getLocalPort() {
+        return localPort;
+    }
 
-	public void setDomain(String domain) {
-		this.domain = domain;
-	}
+    public void setLocalPort(int localPort) {
+        this.localPort = localPort;
+    }
 
-	public void setLocalPort(int localPort) {
-		this.localPort = localPort;
-	}
+    public String getProxyHost() {
+        return proxyHost;
+    }
 
-	public void setProxyHost(String proxyHost) {
-		this.proxyHost = proxyHost;
-	}
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
 
-	public void setProxyPort(int proxyPort) {
-		this.proxyPort = proxyPort;
-	}
+    public int getProxyPort() {
+        return proxyPort;
+    }
 
-	public void save() throws ConfigurationException {
-		Configuration config = propertiesBuilder.getConfiguration();
-		config.setProperty("proxy.domain", this.domain);
-		config.setProperty("local.port", this.localPort);
-		config.setProperty("proxy.host", this.proxyHost);
-		config.setProperty("proxy.port", this.proxyPort);
-		config.setProperty("proxy.username", this.username);
-		propertiesBuilder.save();
-	}
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
+    }
 
-	@Override
-	public String toString() {
-		return "UserConfig [username=" + username + ", domain=" + domain + ", localPort=" + localPort
-				+ ", proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + "]";
-	}
+    public String getProxyTestUrl() {
+        return proxyTestUrl;
+    }
+
+    public void save() throws ConfigurationException {
+        Configuration config = propertiesBuilder.getConfiguration();
+        config.setProperty("proxy.domain", this.domain);
+        config.setProperty("local.port", this.localPort);
+        config.setProperty("proxy.host", this.proxyHost);
+        config.setProperty("proxy.port", this.proxyPort);
+        config.setProperty("proxy.username", this.username);
+        config.setProperty("proxy.test.url", this.proxyTestUrl);
+        propertiesBuilder.save();
+    }
+
+    @Override
+    public String toString() {
+        return "UserConfig [username=" + username + ", domain=" + domain + ", localPort=" + localPort
+                + ", proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + "]";
+    }
 
 }

@@ -14,11 +14,6 @@
 
 package org.kpax.prfoom.proxy;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.entity.AbstractHttpEntity;
@@ -28,110 +23,111 @@ import org.kpax.prfoom.util.LocalIOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * @author Eugen Covaci
  */
 class StreamingHttpEntity extends AbstractHttpEntity {
 
-	private static final Logger logger = LoggerFactory.getLogger(StreamingHttpEntity.class);
+    private static final Logger logger = LoggerFactory.getLogger(StreamingHttpEntity.class);
 
-	private static final int INTERNAL_BUFFER_LENGTH = 100 * 1024;
+    private static final int INTERNAL_BUFFER_LENGTH = 100 * 1024;
+    private final SessionInputBufferImpl inputBuffer;
+    private final long contentLength;
+    private byte[] bufferedBytes;
+    private boolean repeatable;
 
-	private byte[] bufferedBytes;
+    StreamingHttpEntity(SessionInputBufferImpl inputBuffer, HttpRequest request)
+            throws IOException {
+        this.inputBuffer = inputBuffer;
+        contentType = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+        contentEncoding = request.getFirstHeader(HttpHeaders.CONTENT_ENCODING);
+        contentLength = HttpUtils.getContentLength(request);
 
-	private final SessionInputBufferImpl inputBuffer;
+        // Set buffer and repeatable
+        if (contentLength > INTERNAL_BUFFER_LENGTH) {
+            bufferedBytes = new byte[0];
+            repeatable = false;
+        } else {
+            logger.debug("Read buffered bytes");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            writeTo(out, contentLength < 0 ? INTERNAL_BUFFER_LENGTH : contentLength);
+            bufferedBytes = out.toByteArray();
+            repeatable = !(contentLength < 0 && LocalIOUtils.isAvailable(this.inputBuffer));
+        }
 
-	private final long contentLength;
+        logger.debug("bufferedBytes {}", bufferedBytes.length);
+    }
 
-	private boolean repeatable;
+    private void writeTo(OutputStream out, long maxLength) throws IOException {
+        byte[] buffer = new byte[OUTPUT_BUFFER_SIZE];
+        int length;
+        if (maxLength < 0) {
+            // consume until EOF
+            while (LocalIOUtils.isAvailable(inputBuffer)) {
+                length = inputBuffer.read(buffer);
+                if (length == -1) {
+                    break;
+                }
+                out.write(buffer, 0, length);
+                out.flush();
+            }
+        } else {
+            // consume no more than maxLength
+            long remaining = maxLength;
+            while (remaining > 0 && LocalIOUtils.isAvailable(inputBuffer)) {
+                length = inputBuffer.read(buffer, 0, (int) Math.min(OUTPUT_BUFFER_SIZE, remaining));
+                if (length == -1) {
+                    break;
+                }
+                out.write(buffer, 0, length);
+                out.flush();
+                remaining -= length;
+            }
+        }
+    }
 
-	StreamingHttpEntity(SessionInputBufferImpl inputBuffer, HttpRequest request)
-			throws IOException {
-		this.inputBuffer = inputBuffer;
-		contentType = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
-		contentEncoding = request.getFirstHeader(HttpHeaders.CONTENT_ENCODING);
-		contentLength = HttpUtils.getContentLength(request);
+    @Override
+    public void writeTo(OutputStream outputStream) throws IOException {
 
-		// Set buffer and repeatable
-		if (contentLength > INTERNAL_BUFFER_LENGTH) {
-			bufferedBytes = new byte[0];
-			repeatable = false;
-		} else {
-			logger.debug("Read buffered bytes");
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			writeTo(out, contentLength < 0 ? INTERNAL_BUFFER_LENGTH : contentLength);
-			bufferedBytes = out.toByteArray();
-			repeatable = !(contentLength < 0 && LocalIOUtils.isAvailable(this.inputBuffer));
-		}
+        // Write the initial buffer
+        if (bufferedBytes.length > 0) {
+            logger.debug("Write initial buffer");
+            outputStream.write(bufferedBytes);
+            logger.debug("End Write initial buffer");
+        }
 
-		logger.debug("bufferedBytes {}", bufferedBytes.length);
-	}
+        // Write the remaining bytes when non-repeatable
+        if (!repeatable) {
+            logger.debug("Write the remaining bytes");
+            long remaining = contentLength < 0 ? contentLength : contentLength - bufferedBytes.length;
+            writeTo(outputStream, remaining);
+        }
 
-	private void writeTo(OutputStream out, long maxLength) throws IOException {
-		byte[] buffer = new byte[OUTPUT_BUFFER_SIZE];
-		int length;
-		if (maxLength < 0) {
-			// consume until EOF
-			while (LocalIOUtils.isAvailable(inputBuffer)) {
-				length = inputBuffer.read(buffer);
-				if (length == -1) {
-					break;
-				}
-				out.write(buffer, 0, length);
-				out.flush();
-			}
-		} else {
-			// consume no more than maxLength
-			long remaining = maxLength;
-			while (remaining > 0 && LocalIOUtils.isAvailable(inputBuffer)) {
-				length = inputBuffer.read(buffer, 0, (int) Math.min(OUTPUT_BUFFER_SIZE, remaining));
-				if (length == -1) {
-					break;
-				}
-				out.write(buffer, 0, length);
-				out.flush();
-				remaining -= length;
-			}
-		}
-	}
+    }
 
-	@Override
-	public void writeTo(OutputStream outputStream) throws IOException {
+    @Override
+    public boolean isStreaming() {
+        return true;
+    }
 
-		// Write the initial buffer
-		if (bufferedBytes.length > 0) {
-			logger.debug("Write initial buffer");
-			outputStream.write(bufferedBytes);
-			logger.debug("End Write initial buffer");
-		}
+    @Override
+    public boolean isRepeatable() {
+        return repeatable;
+    }
 
-		// Write the remaining bytes when non-repeatable
-		if (!repeatable) {
-			logger.debug("Write the remaining bytes");
-			long remaining = contentLength < 0 ? contentLength : contentLength - bufferedBytes.length;
-			writeTo(outputStream, remaining);
-		}
+    @Override
+    public long getContentLength() {
+        return contentLength;
+    }
 
-	}
-
-	@Override
-	public boolean isStreaming() {
-		return true;
-	}
-
-	@Override
-	public boolean isRepeatable() {
-		return repeatable;
-	}
-
-	@Override
-	public long getContentLength() {
-		return contentLength;
-	}
-
-	@Override
-	public InputStream getContent() {
-		throw new UnsupportedOperationException("No content available");
-	}
+    @Override
+    public InputStream getContent() {
+        throw new UnsupportedOperationException("No content available");
+    }
 
 }

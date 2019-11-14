@@ -16,9 +16,6 @@ package org.kpax.prfoom.proxy;
 
 import org.kpax.prfoom.SystemConfig;
 import org.kpax.prfoom.UserConfig;
-import org.kpax.prfoom.exception.CommandExecutionException;
-import org.kpax.prfoom.exception.InvalidKdcException;
-import org.kpax.prfoom.exception.KdcNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +29,6 @@ import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.security.GeneralSecurityException;
 
 /**
  * The local proxy server.
@@ -49,9 +45,6 @@ public class LocalProxyServer implements Closeable {
 
     @Autowired
     private UserConfig userConfig;
-
-    @Autowired
-    private ProxyContext proxyContext;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -73,11 +66,6 @@ public class LocalProxyServer implements Closeable {
         }
         logger.info("Start local proxy server with userConfig {}", userConfig);
         try {
-            proxyContext.start();
-
-            // Test the proxy configuration
-
-
             serverSocket = AsynchronousServerSocketChannel.open()
                     .bind(new InetSocketAddress(userConfig.getLocalPort()));
             serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {

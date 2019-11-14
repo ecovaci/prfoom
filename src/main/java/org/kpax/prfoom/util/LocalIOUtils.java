@@ -14,111 +14,102 @@
 
 package org.kpax.prfoom.util;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Iterator;
-
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.impl.io.SessionInputBufferImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.util.Iterator;
+
 /**
  * @author Eugen Covaci
  */
 public final class LocalIOUtils extends IOUtils {
 
-	private static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
+    public static final int DEFAULT_BUFFER_SIZE = 4 * 1024;
+    private static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
 
-	public static final int DEFAULT_BUFFER_SIZE = 4 * 1024;
+    private LocalIOUtils() {
+    }
 
-	private LocalIOUtils() {
-	}
+    /**
+     * It checks for available data.
+     *
+     * @param inputBuffer The input buffer.
+     * @return <code>false</code> iff EOF has been reached.
+     */
+    public static boolean isAvailable(SessionInputBufferImpl inputBuffer) {
+        try {
+            return inputBuffer.hasBufferedData() || inputBuffer.fillBuffer() > -1;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	/**
-	 * It checks for available data.
-	 * 
-	 * @param inputBuffer
-	 *            The input buffer.
-	 * @return <code>false</code> iff EOF has been reached.
-	 */
-	public static boolean isAvailable(SessionInputBufferImpl inputBuffer) {
-		try {
-			return inputBuffer.hasBufferedData() || inputBuffer.fillBuffer() > -1;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    /**
+     * Copy from <code>inputStream</code> to <code>outputStream</code> until EOF is
+     * reached.
+     *
+     * @param inputStream  The input stream to copy from.
+     * @param outputStream The output stream to write into.
+     */
+    public static void copyQuietly(InputStream inputStream, OutputStream outputStream) {
+        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+        try {
+            int len;
+            while ((len = inputStream.read(buffer)) != EOF) {
+                outputStream.write(buffer, 0, len);
+                outputStream.flush();
+            }
 
-	/**
-	 * Copy from <code>inputStream</code> to <code>outputStream</code> until EOF is
-	 * reached.
-	 * 
-	 * @param inputStream
-	 *            The input stream to copy from.
-	 * @param outputStream
-	 *            The output stream to write into.
-	 */
-	public static void copyQuietly(InputStream inputStream, OutputStream outputStream) {
-		byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-		try {
-			int len;
-			while ((len = inputStream.read(buffer)) != EOF) {
-				outputStream.write(buffer, 0, len);
-				outputStream.flush();
-			}
+        } catch (Exception e) {
+            logger.debug("Error on reading bytes", e);
+        }
+    }
 
-		} catch (Exception e) {
-			logger.debug("Error on reading bytes", e);
-		}
-	}
+    /**
+     * Close all <code>closeables</code>.
+     *
+     * @param closeables The the array of {@link Closeable}
+     */
+    public static void close(Closeable... closeables) {
+        if (closeables != null) {
+            for (Closeable closable : closeables) {
+                if (closable != null) {
+                    logger.debug("Close {}", closable.getClass());
+                    try {
+                        closable.close();
+                    } catch (Exception e) {
+                        logger.debug("Fail to close: " + closable.getClass().getName(), e);
+                    }
+                }
+            }
+        }
+    }
 
-	/**
-	 * Close all <code>closeables</code>.
-	 * 
-	 * @param closeables
-	 *            The the array of {@link Closeable}
-	 */
-	public static void close(Closeable... closeables) {
-		if (closeables != null) {
-			for (Closeable closable : closeables) {
-				if (closable != null) {
-					logger.debug("Close {}", closable.getClass());
-					try {
-						closable.close();
-					} catch (Exception e) {
-						logger.debug("Fail to close: " + closable.getClass().getName(), e);
-					}
-				}
-			}
-		}
-	}
+    public static String toPath(String root, String... more) {
+        StringBuilder buffer = new StringBuilder(root);
+        for (String segment : more) {
+            buffer.append(File.separator).append(segment);
+        }
+        return buffer.toString();
+    }
 
-	public static String toPath(String root, String... more) {
-		StringBuilder buffer = new StringBuilder(root);
-		for (String segment : more) {
-			buffer.append(File.separator).append(segment);
-		}
-		return buffer.toString();
-	}
-
-	public static void mergeProperties(PropertiesConfiguration from, PropertiesConfiguration to) {
-		for (Iterator<String> itr = to.getKeys(); itr.hasNext();) {
-			String key = itr.next();
-			if (!from.containsKey(key)) {
-				itr.remove();
-			}
-		}
-		for (Iterator<String> itr = from.getKeys(); itr.hasNext();) {
-			String key = itr.next();
-			if (!to.containsKey(key)) {
-				to.addProperty(key, from.getProperty(key));
-			}
-		}
-	}
+    public static void mergeProperties(PropertiesConfiguration from, PropertiesConfiguration to) {
+        for (Iterator<String> itr = to.getKeys(); itr.hasNext(); ) {
+            String key = itr.next();
+            if (!from.containsKey(key)) {
+                itr.remove();
+            }
+        }
+        for (Iterator<String> itr = from.getKeys(); itr.hasNext(); ) {
+            String key = itr.next();
+            if (!to.containsKey(key)) {
+                to.addProperty(key, from.getProperty(key));
+            }
+        }
+    }
 
 }

@@ -16,22 +16,23 @@ package org.kpax.prfoom.exception;
 
 /**
  * Thrown when there is something wrong with application's configuration.
+ *
  * @author Eugen Covaci
  */
 public class InvalidConfigException extends RuntimeException {
 
-	private static final long serialVersionUID = 7395574835552647875L;
+    private static final long serialVersionUID = 7395574835552647875L;
 
-	public InvalidConfigException(String message) {
-		super(message);
-	}
+    public InvalidConfigException(String message) {
+        super(message);
+    }
 
-	public InvalidConfigException(Throwable cause) {
-		super(cause);
-	}
+    public InvalidConfigException(Throwable cause) {
+        super(cause);
+    }
 
-	public InvalidConfigException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public InvalidConfigException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
 }

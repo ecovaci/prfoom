@@ -31,7 +31,8 @@ import org.apache.http.conn.routing.RouteInfo.LayerType;
 import org.apache.http.conn.routing.RouteInfo.TunnelType;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.auth.*;
+import org.apache.http.impl.auth.HttpAuthenticator;
+import org.apache.http.impl.auth.NTLMSchemeFactory;
 import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.execchain.TunnelRefusedException;
@@ -181,8 +182,8 @@ class CustomProxyClient {
         responseStream.write(CrlfFormat.crlf(response.getStatusLine().toString()));
 
         // Write the response headers.
-		// The client might not be interested,
-		// therefore only debug the error.
+        // The client might not be interested,
+        // therefore only debug the error.
         try {
             logger.debug("Start writing tunnel response headers");
             for (Header header : response.getAllHeaders()) {

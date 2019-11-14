@@ -13,24 +13,24 @@ import org.springframework.stereotype.Component;
 @PropertySource(value = "file:${user.dir}/config/user.properties", name = "userProperties")
 public class UiConfig {
 
-	@Autowired
-	private FileBasedConfigurationBuilder<PropertiesConfiguration> propertiesBuilder;
+    @Autowired
+    private FileBasedConfigurationBuilder<PropertiesConfiguration> propertiesBuilder;
 
-	@Value("${font.size}")
-	private Integer fontSize;
+    @Value("${font.size}")
+    private Integer fontSize;
 
-	public Integer getFontSize() {
-		return fontSize;
-	}
+    public Integer getFontSize() {
+        return fontSize;
+    }
 
-	public void setFontSize(Integer fontSize) {
-		this.fontSize = fontSize;
-	}
+    public void setFontSize(Integer fontSize) {
+        this.fontSize = fontSize;
+    }
 
-	public void save() throws ConfigurationException {
-		Configuration config = propertiesBuilder.getConfiguration();
-		config.setProperty("font.size", this.fontSize);
-		propertiesBuilder.save();
-	}
+    public void save() throws ConfigurationException {
+        Configuration config = propertiesBuilder.getConfiguration();
+        config.setProperty("font.size", this.fontSize);
+        propertiesBuilder.save();
+    }
 
 }

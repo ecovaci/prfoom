@@ -1,7 +1,7 @@
 package org.kpax.prfoom;
 
 public interface ExitCodes {
-	
-	int OK = 0;
-	
+
+    int OK = 0;
+
 }
