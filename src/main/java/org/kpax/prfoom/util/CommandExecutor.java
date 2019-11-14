@@ -51,9 +51,9 @@ public class CommandExecutor {
 		} else {
 			command = new String[] { "sh", "-c", "nslookup -type=srv _kerberos._tcp." + domain.toUpperCase() };
 		}
-		logger.info("Execute command: {}", Arrays.stream(command).collect(Collectors.joining(" ")));
+		logger.info("Execute command: {}", String.join(" ", command));
 		List<String> output = CommandExecutor.execute(command);
-		logger.info("nslookup output: \n{}", output.stream().collect(Collectors.joining("\n")));
+		logger.info("nslookup output: \n{}", String.join("\n", output));
 		String tag = isWindows ? "svr hostname" : "service";
 		return output.stream().filter((item) -> item.trim().startsWith(tag))
 				.map((item) -> {

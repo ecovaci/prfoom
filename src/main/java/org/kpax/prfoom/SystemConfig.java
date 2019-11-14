@@ -40,9 +40,6 @@ public class SystemConfig {
 	@Value("${max.connections}")
 	private Integer maxConnections;
 
-	@Value("${ticket.threshold}")
-	private Integer ticketThreshold;
-
 	@Value("${eviction.period}")
 	private Integer evictionPeriod;
 
@@ -71,7 +68,9 @@ public class SystemConfig {
 					.getMainAttributes()
 					.get(Attributes.Name.IMPLEMENTATION_VERSION).toString();
 		} catch (Exception e) {
+			releaseVersion = "Unknown";
 			logger.warn("Error on getting application version", e);
+
 		}
 	}
 
@@ -81,10 +80,6 @@ public class SystemConfig {
 
 	public Integer getMaxConnections() {
 		return maxConnections;
-	}
-
-	public int getTicketThreshold() {
-		return ticketThreshold;
 	}
 
 	public Integer getEvictionPeriod() {

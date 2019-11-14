@@ -17,9 +17,12 @@ package org.kpax.prfoom.util;
 /**
  * @author Eugen Covaci
  */
-public class CrlfFormat {
+public final class CrlfFormat {
 
 	public static final String CRLF = "\r\n";
+
+	private CrlfFormat() {
+	}
 
 	public static byte[] crlf(String input) {
 		if (input != null) {

@@ -184,7 +184,7 @@ public class AppFrame extends JFrame {
 			});
 		}
 		//
-		setTitle("Basic Proxy Facade for Kerberos");
+		setTitle("Perfoom");
 		setJMenuBar(getMainMenuBar());
 		JPanel mainContentPane = new JPanel();
 		setContentPane(mainContentPane);
@@ -493,9 +493,9 @@ public class AppFrame extends JFrame {
 	private JMenuItem getMntmAbout() {
 		if (mntmAbout == null) {
 			mntmAbout = new JMenuItem("About");
-			mntmAbout.addActionListener(e -> SwingUtils.showInfoMessage("About", "Basic Proxy Facade for Kerberos" +
+			mntmAbout.addActionListener(e -> SwingUtils.showInfoMessage("About", "Perfoom - Basic Proxy Facade for NTML" +
 					"\nVersion: " + systemConfig.getReleaseVersion()
-					+ "\nProject home page: https://github.com/ecovaci/bpf"
+					+ "\nProject home page: https://github.com/ecovaci/prfoom"
 					+ "\nLicense: Apache 2.0"));
 		}
 		return mntmAbout;

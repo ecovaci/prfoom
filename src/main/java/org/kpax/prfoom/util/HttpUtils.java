@@ -19,6 +19,7 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ import org.apache.http.protocol.HTTP;
 /**
  * @author Eugen Covaci
  */
-public class HttpUtils {
+public final class HttpUtils {
 
 	public static final String STATUS_LINE_CONNECTION_ESTABLISHED = "200 Connection established";
 
@@ -49,6 +50,9 @@ public class HttpUtils {
 
 	public static final int MAX_PORT_VALUE = 65535;
 
+	private HttpUtils() {
+	}
+
 	public static URI parseConnectUri(String uri) throws NumberFormatException, URISyntaxException {
 		String[] split = uri.split(":");
 		return new URI(null, null, split[0], Integer.parseInt(split[1]), null, null, null);
@@ -58,7 +62,7 @@ public class HttpUtils {
 		int index = url.indexOf("?");
 		if (index > -1 && index < url.length()) {
 			URIBuilder uriBuilder = new URIBuilder(url.substring(0, index));
-			List<NameValuePair> nvps = URLEncodedUtils.parse(url.substring(index + 1), Charset.forName("UTF-8"));
+			List<NameValuePair> nvps = URLEncodedUtils.parse(url.substring(index + 1), StandardCharsets.UTF_8);
 			uriBuilder.addParameters(nvps);
 			return uriBuilder.build();
 		}

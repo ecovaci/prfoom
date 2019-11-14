@@ -44,13 +44,13 @@ public class UserConfig {
 	@Value("${proxy.domain}")
 	private String domain;
 
-	@Value("${local.port}")
+	@Value("${local.port:3129}")
 	private int localPort;
 
-	@Value("${proxy.host}")
+	@Value("${proxy.host:localhost}")
 	private String proxyHost;
 
-	@Value("${proxy.port ? : 0}")
+	@Value("${proxy.port:80}")
 	private int proxyPort;
 
 	@PostConstruct

@@ -51,6 +51,9 @@ public class LocalProxyServer implements Closeable {
     private UserConfig userConfig;
 
     @Autowired
+    private ProxyContext proxyContext;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     private AsynchronousServerSocketChannel serverSocket;
@@ -61,19 +64,16 @@ public class LocalProxyServer implements Closeable {
      * Starts the local proxy server.
      * If the server had been started, an {@link IllegalStateException} would be thrown.
      *
-     * @throws GeneralSecurityException  when authentication failed.
-     * @throws KdcNotFoundException      when no KDC server is found.
-     * @throws CommandExecutionException when getting KDC server list failed.
-     * @throws InvalidKdcException       when at least one KDC server is found but it is not valid.
      * @throws Exception
      */
     public synchronized void start()
-            throws GeneralSecurityException, KdcNotFoundException, CommandExecutionException, InvalidKdcException, Exception {
+            throws Exception {
         if (started) {
             throw new IllegalStateException("Server already started!");
         }
         logger.info("Start local proxy server with userConfig {}", userConfig);
         try {
+            proxyContext.start();
             serverSocket = AsynchronousServerSocketChannel.open()
                     .bind(new InetSocketAddress(userConfig.getLocalPort()));
             serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {

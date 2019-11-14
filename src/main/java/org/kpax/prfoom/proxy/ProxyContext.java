@@ -69,7 +69,7 @@ public class ProxyContext implements Closeable {
 
     private Timer connectionEvictionTimer;
 
-    private CredentialsProvider ntlmCredentialsProvider;
+    private CredentialsProvider credentialsProvider;
 
     @PostConstruct
     public void init() {
@@ -96,9 +96,13 @@ public class ProxyContext implements Closeable {
         logger.info("Done proxy context's initialization");
     }
 
+    public void start() {
+        this.credentialsProvider = createCredentialsProvider();
+}
+
     public CloseableHttpClient getHttpClientBuilder(boolean retries) {
         HttpClientBuilder builder = HttpClients.custom().useSystemProperties()
-                .setDefaultCredentialsProvider(getNtlmCredentialsProvider())
+                .setDefaultCredentialsProvider(getCredentialsProvider())
                 .setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy())
                 .setProxy(getProxyRequestConfig().getProxy())
                 .setDefaultRequestConfig(getProxyRequestConfig())
@@ -164,14 +168,15 @@ public class ProxyContext implements Closeable {
         return socketConfig;
     }
 
-    public CredentialsProvider getNtlmCredentialsProvider() {// FIXME Make it thread safe
-        if (ntlmCredentialsProvider == null) {
-            ntlmCredentialsProvider = new BasicCredentialsProvider();
-            ntlmCredentialsProvider.setCredentials(AuthScope.ANY,
-                    new NTCredentials(userConfig.getUsername(), userConfig.getPassword(), null, userConfig.getDomain()));
+    private CredentialsProvider createCredentialsProvider() {
+        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new NTCredentials(userConfig.getUsername(), userConfig.getPassword(), null, userConfig.getDomain()));
+        return credentialsProvider;
+    }
 
-        }
-        return ntlmCredentialsProvider;
+    public CredentialsProvider getCredentialsProvider() {
+        return credentialsProvider;
     }
 
     @Override

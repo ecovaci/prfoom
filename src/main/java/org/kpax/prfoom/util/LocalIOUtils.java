@@ -30,11 +30,14 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Eugen Covaci
  */
-public class LocalIOUtils extends IOUtils {
+public final class LocalIOUtils extends IOUtils {
 
 	private static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
 
 	public static final int DEFAULT_BUFFER_SIZE = 4 * 1024;
+
+	private LocalIOUtils() {
+	}
 
 	/**
 	 * It checks for available data.

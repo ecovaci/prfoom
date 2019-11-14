@@ -193,66 +193,66 @@ public class SocketHandler {
             }
 
             // Execute the request
-                try {
-                    HttpHost target = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
+            try {
+                HttpHost target = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
 
-                    CloseableHttpResponse response;
-                    if (retryRequest) {
-                        response = new CloseableRepeater<CloseableHttpResponse>().repeat(() -> httpClient.execute(target, request),
-                                (t) -> t.getStatusLine().getStatusCode() != HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED,
-                                systemConfig.getRepeatsOnFailure());
-                    } else {
-                        response = httpClient.execute(target, request);
-                    }
-
-                    try {
-                        String statusLine = response.getStatusLine().toString();
-                        logger.debug("Response status line: {}", statusLine);
-
-                        OutputStream outputStream = localSocketChannel.getOutputStream();
-                        outputStream.write(CrlfFormat.crlf(statusLine));
-
-                        logger.debug("Start writing response headers");
-                        for (Header header : response.getAllHeaders()) {
-                            if (HttpHeaders.TRANSFER_ENCODING.equals(header.getName())) {
-
-                                // Strip 'chunked' from Transfer-Encoding header's value
-                                String nonChunkedTransferEncoding = HttpUtils.stripChunked(header.getValue());
-                                if (nonChunkedTransferEncoding != null && !nonChunkedTransferEncoding.isEmpty()) {
-                                    outputStream.write(CrlfFormat.crlf(HttpUtils.createStrHttpHeader(HttpHeaders.TRANSFER_ENCODING,
-                                            nonChunkedTransferEncoding)));
-                                    logger.debug("Add chunk-striped header response");
-                                } else {
-                                    logger.debug("Remove transfer encoding chunked header response");
-                                }
-                            } else {
-                                String strHeader = header.toString();
-                                logger.debug("Write response header: {}", strHeader);
-                                outputStream.write(CrlfFormat.crlf(strHeader));
-                            }
-                        }
-
-                        // Empty line marking the end
-                        // of header's section
-                        outputStream.write(CrlfFormat.CRLF.getBytes());
-
-                        HttpEntity entity = response.getEntity();
-                        if (entity != null) {
-                            logger.debug("Start writing entity content");
-                            entity.writeTo(outputStream);
-                            logger.debug("End writing entity content");
-                        }
-
-                        EntityUtils.consume(entity);
-                    } finally {
-                        LocalIOUtils.close(response);
-                    }
-
-                } catch (org.apache.http.client.ClientProtocolException e) {
-                    logger.debug("Error on executing HTTP request", e);
-                } catch (Throwable e) {
-                    logger.error("Error on executing HTTP request", e);
+                CloseableHttpResponse response;
+                if (retryRequest) {
+                    response = new CloseableRepeater<CloseableHttpResponse>().repeat(() -> httpClient.execute(target, request),
+                            (t) -> t.getStatusLine().getStatusCode() != HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED,
+                            systemConfig.getRepeatsOnFailure());
+                } else {
+                    response = httpClient.execute(target, request);
                 }
+
+                try {
+                    String statusLine = response.getStatusLine().toString();
+                    logger.debug("Response status line: {}", statusLine);
+
+                    OutputStream outputStream = localSocketChannel.getOutputStream();
+                    outputStream.write(CrlfFormat.crlf(statusLine));
+
+                    logger.debug("Start writing response headers");
+                    for (Header header : response.getAllHeaders()) {
+                        if (HttpHeaders.TRANSFER_ENCODING.equals(header.getName())) {
+
+                            // Strip 'chunked' from Transfer-Encoding header's value
+                            String nonChunkedTransferEncoding = HttpUtils.stripChunked(header.getValue());
+                            if (nonChunkedTransferEncoding != null && !nonChunkedTransferEncoding.isEmpty()) {
+                                outputStream.write(CrlfFormat.crlf(HttpUtils.createStrHttpHeader(HttpHeaders.TRANSFER_ENCODING,
+                                        nonChunkedTransferEncoding)));
+                                logger.debug("Add chunk-striped header response");
+                            } else {
+                                logger.debug("Remove transfer encoding chunked header response");
+                            }
+                        } else {
+                            String strHeader = header.toString();
+                            logger.debug("Write response header: {}", strHeader);
+                            outputStream.write(CrlfFormat.crlf(strHeader));
+                        }
+                    }
+
+                    // Empty line marking the end
+                    // of header's section
+                    outputStream.write(CrlfFormat.CRLF.getBytes());
+
+                    HttpEntity entity = response.getEntity();
+                    if (entity != null) {
+                        logger.debug("Start writing entity content");
+                        entity.writeTo(outputStream);
+                        logger.debug("End writing entity content");
+                    }
+
+                    EntityUtils.consume(entity);
+                } finally {
+                    LocalIOUtils.close(response);
+                }
+
+            } catch (org.apache.http.client.ClientProtocolException e) {
+                logger.debug("Error in the HTTP protocol", e);
+            } catch (Throwable e) {
+                logger.debug("Error on executing HTTP request", e);
+            }
             logger.debug("End handling non-connect request {}", requestLine);
         } finally {
             LocalIOUtils.close(httpClient);
