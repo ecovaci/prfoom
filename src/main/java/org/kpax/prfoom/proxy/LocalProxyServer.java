@@ -100,22 +100,17 @@ public class LocalProxyServer implements Closeable {
             logger.info("Server started, listening on port: " + userConfig.getLocalPort());
         } catch (Exception e) {
             // Cleanup on exception
-            if (serverSocket != null) {
-                try {
-                    serverSocket.close();
-                } catch (Exception e1) {
-                    logger.warn("Error on closing server socket", e1);
-                }
-            }
+            close();
             throw e;
         }
     }
 
     @Override
-    public void close() {
-        logger.info("Stop running local proxy server");
+    public synchronized void close() {
+        logger.info("Stop running the local proxy server, if any");
         if (serverSocket != null) {
             try {
+                logger.info("Close the server socket");
                 serverSocket.close();
             } catch (Exception e) {
                 logger.warn("Error on closing server socket", e);
