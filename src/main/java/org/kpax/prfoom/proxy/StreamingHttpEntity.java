@@ -36,31 +36,39 @@ class StreamingHttpEntity extends AbstractHttpEntity {
     private static final Logger logger = LoggerFactory.getLogger(StreamingHttpEntity.class);
 
     private static final int INTERNAL_BUFFER_LENGTH = 100 * 1024;
+
     private final SessionInputBufferImpl inputBuffer;
+
     private final long contentLength;
+
+    /**
+     * Pre-write into this buffer to determine whether the entity
+     * should be declared repeatable or not.
+     */
     private byte[] bufferedBytes;
+
     private boolean repeatable;
 
     StreamingHttpEntity(SessionInputBufferImpl inputBuffer, HttpRequest request)
             throws IOException {
         this.inputBuffer = inputBuffer;
-        contentType = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
-        contentEncoding = request.getFirstHeader(HttpHeaders.CONTENT_ENCODING);
-        contentLength = HttpUtils.getContentLength(request);
+        this.contentType = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+        this.contentEncoding = request.getFirstHeader(HttpHeaders.CONTENT_ENCODING);
+        this.contentLength = HttpUtils.getContentLength(request);
 
         // Set buffer and repeatable
         if (contentLength > INTERNAL_BUFFER_LENGTH) {
-            bufferedBytes = new byte[0];
-            repeatable = false;
+            this.bufferedBytes = new byte[0];
+            this.repeatable = false;
         } else {
             logger.debug("Read buffered bytes");
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             writeTo(out, contentLength < 0 ? INTERNAL_BUFFER_LENGTH : contentLength);
-            bufferedBytes = out.toByteArray();
-            repeatable = !(contentLength < 0 && LocalIOUtils.isAvailable(this.inputBuffer));
+            this.bufferedBytes = out.toByteArray();
+            this.repeatable = !(contentLength < 0 && LocalIOUtils.isAvailable(this.inputBuffer));
         }
 
-        logger.debug("bufferedBytes {}", bufferedBytes.length);
+        logger.debug("bufferedBytes {}", this.bufferedBytes.length);
     }
 
     private void writeTo(OutputStream out, long maxLength) throws IOException {
@@ -95,6 +103,7 @@ class StreamingHttpEntity extends AbstractHttpEntity {
     public void writeTo(OutputStream outputStream) throws IOException {
 
         // Write the initial buffer
+        // This is repeatable case
         if (bufferedBytes.length > 0) {
             logger.debug("Write initial buffer");
             outputStream.write(bufferedBytes);
