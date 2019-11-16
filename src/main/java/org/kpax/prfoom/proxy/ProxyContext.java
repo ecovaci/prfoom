@@ -32,6 +32,7 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.kpax.prfoom.SystemConfig;
 import org.kpax.prfoom.UserConfig;
+import org.kpax.prfoom.auth.Authentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,9 @@ public class ProxyContext implements Closeable {
     @Autowired
     private UserConfig userConfig;
 
+    @Autowired
+    private Authentication authentication;
+
     private ThreadPoolExecutor threadPool;
 
     private PoolingHttpClientConnectionManager connectionManager;
@@ -69,12 +73,16 @@ public class ProxyContext implements Closeable {
 
     private Timer connectionEvictionTimer;
 
-    private CredentialsProvider credentialsProvider;
-
     @PostConstruct
     public void init() {
         logger.info("Create thread pool");
-        threadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+        threadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadFactory() {
+            public Thread newThread(Runnable r) {
+                Thread t = Executors.defaultThreadFactory().newThread(r);
+                t.setDaemon(true);
+                return t;
+            }
+        });
 
         logger.info("Create pooling connection manager");
         connectionManager = new PoolingHttpClientConnectionManager();
@@ -87,18 +95,25 @@ public class ProxyContext implements Closeable {
             connectionManager.setDefaultMaxPerRoute(systemConfig.getMaxConnectionsPerRoute());
         }
 
+        logger.info("Done proxy context's initialization");
+    }
+
+    /**
+     * After this method call, the proxy should be ready
+     * for handling HTTP(s) requests.
+     */
+    public void start () {
         if (systemConfig.isEvictionEnabled()) {
             logger.info("Create connection eviction timer");
             connectionEvictionTimer = new Timer();
             connectionEvictionTimer.schedule(new EvictionTask(), 0, systemConfig.getEvictionPeriod() * 1000);
         }
-
-        logger.info("Done proxy context's initialization");
+        logger.info("Proxy context started");
     }
 
     public CloseableHttpClient getHttpClientBuilder(boolean retries) {
         HttpClientBuilder builder = HttpClients.custom().useSystemProperties()
-                .setDefaultCredentialsProvider(getCredentialsProvider())
+                .setDefaultCredentialsProvider(authentication.getCredentialsProvider())
                 .setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy())
                 .setProxy(getProxyRequestConfig().getProxy())
                 .setDefaultRequestConfig(getProxyRequestConfig())
@@ -159,19 +174,6 @@ public class ProxyContext implements Closeable {
             }
         }
         return socketConfig;
-    }
-
-    public CredentialsProvider getCredentialsProvider() {
-        if (credentialsProvider == null) {
-            synchronized (this) {
-                if (credentialsProvider == null) {
-                    credentialsProvider = new BasicCredentialsProvider();
-                    credentialsProvider.setCredentials(AuthScope.ANY,
-                            new NTCredentials(userConfig.getUsername(), userConfig.getPassword(), null, userConfig.getDomain()));
-                }
-            }
-        }
-        return credentialsProvider;
     }
 
     @Override

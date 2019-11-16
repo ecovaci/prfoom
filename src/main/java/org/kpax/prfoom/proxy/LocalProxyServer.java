@@ -47,6 +47,9 @@ public class LocalProxyServer implements Closeable {
     private UserConfig userConfig;
 
     @Autowired
+    private ProxyContext proxyContext;
+
+    @Autowired
     private ApplicationContext applicationContext;
 
     private AsynchronousServerSocketChannel serverSocket;
@@ -66,6 +69,7 @@ public class LocalProxyServer implements Closeable {
         }
         logger.info("Start local proxy server with userConfig {}", userConfig);
         try {
+            proxyContext.start();
             serverSocket = AsynchronousServerSocketChannel.open()
                     .bind(new InetSocketAddress(userConfig.getLocalPort()));
             serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {

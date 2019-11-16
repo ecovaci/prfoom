@@ -78,11 +78,15 @@ public final class LocalIOUtils extends IOUtils {
         if (closeables != null) {
             for (Closeable closable : closeables) {
                 if (closable != null) {
-                    logger.debug("Close {}", closable.getClass());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Close {}", closable.getClass());
+                    }
                     try {
                         closable.close();
                     } catch (Exception e) {
-                        logger.debug("Fail to close: " + closable.getClass().getName(), e);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Fail to close: " + closable.getClass().getName(), e);
+                        }
                     }
                 }
             }

@@ -41,8 +41,10 @@ import org.apache.http.protocol.*;
 import org.apache.http.util.Args;
 import org.apache.http.util.EntityUtils;
 import org.kpax.prfoom.SystemConfig;
+import org.kpax.prfoom.auth.Authentication;
 import org.kpax.prfoom.util.CrlfFormat;
 import org.kpax.prfoom.util.HttpUtils;
+import org.kpax.prfoom.util.LocalIOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,8 +58,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 /**
- * ProxyClient can be used to establish a tunnel via an HTTP proxy. FIXME Fix
- * error response to the client!
+ * ProxyClient can be used to establish a tunnel via an HTTP proxy.
  *
  * @author Eugen Covaci
  */
@@ -71,7 +72,7 @@ class CustomProxyClient {
     private SystemConfig systemConfig;
 
     @Autowired
-    private ProxyContext proxyContext;
+    private Authentication authentication;
 
     private HttpProcessor httpProcessor;
     private HttpRequestExecutor requestExec;
@@ -95,7 +96,6 @@ class CustomProxyClient {
                 .build();
     }
 
-    // FIXME Handle connection.close() properly
     public Socket tunnel(final HttpHost proxy, final HttpHost target,
                          final ProtocolVersion protocolVersion, final OutputStream responseStream)
             throws IOException, HttpException {
@@ -118,7 +118,7 @@ class CustomProxyClient {
         context.setAttribute(HttpCoreContext.HTTP_REQUEST, connect);
         context.setAttribute(HttpClientContext.HTTP_ROUTE, route);
         context.setAttribute(HttpClientContext.PROXY_AUTH_STATE, this.proxyAuthState);
-        context.setAttribute(HttpClientContext.CREDS_PROVIDER, proxyContext.getCredentialsProvider());
+        context.setAttribute(HttpClientContext.CREDS_PROVIDER, authentication.getCredentialsProvider());
         context.setAttribute(HttpClientContext.REQUEST_CONFIG, RequestConfig.DEFAULT);
         context.setAttribute(HttpClientContext.AUTHSCHEME_REGISTRY, this.authSchemeRegistry);
 
@@ -150,7 +150,7 @@ class CustomProxyClient {
                         EntityUtils.consume(response.getEntity());
                     } else {
                         logger.debug("Close tunnel connection");
-                        connection.close();
+                        LocalIOUtils.close(connection);
                     }
                     // discard previous auth header
                     connect.removeHeaders(AUTH.PROXY_AUTH_RESP);
@@ -174,7 +174,7 @@ class CustomProxyClient {
                 response.setEntity(new BufferedHttpEntity(entity));
             }
             logger.debug("Close tunnel connection");
-            connection.close();
+            LocalIOUtils.close(connection);
             throw new TunnelRefusedException("CONNECT refused by proxy: " + response.getStatusLine(), response);
         }
 

@@ -41,7 +41,7 @@ public class CloseableRepeater<R extends Closeable> {
             if (until.test(r)) {
                 break;
             } else {
-                LocalIOUtils.closeQuietly(r);
+                LocalIOUtils.close(r);
             }
         }
         return r;

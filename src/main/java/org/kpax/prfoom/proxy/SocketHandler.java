@@ -117,7 +117,6 @@ public class SocketHandler {
         Socket socket = null;
         try {
             // Creates a tunnel through proxy.
-            // No credentials provided, we only rely on JAAS.
             socket = proxyClient.tunnel(proxy, target, requestLine.getProtocolVersion(), localSocketChannel.getOutputStream());
             final OutputStream socketOutputStream = socket.getOutputStream();
             proxyContext.executeAsync(() -> LocalIOUtils.copyQuietly(localSocketChannel.getInputStream(), socketOutputStream));
@@ -154,9 +153,7 @@ public class SocketHandler {
         } catch (Exception e) {
             logger.error("Error on creating/handling proxy tunnel", e);
         } finally {
-            if (socket != null) {
-                LocalIOUtils.close(socket);
-            }
+            LocalIOUtils.close(socket);
         }
     }
 
@@ -236,6 +233,7 @@ public class SocketHandler {
                     // of header's section
                     outputStream.write(CrlfFormat.CRLF.getBytes());
 
+                    // Now write the request body, if any
                     HttpEntity entity = response.getEntity();
                     if (entity != null) {
                         logger.debug("Start writing entity content");
@@ -243,6 +241,7 @@ public class SocketHandler {
                         logger.debug("End writing entity content");
                     }
 
+                    // Make sure the entity is fully consumed
                     EntityUtils.consume(entity);
                 } finally {
                     LocalIOUtils.close(response);

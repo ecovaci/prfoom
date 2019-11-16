@@ -8,7 +8,7 @@
   <artifactId>prfoom</artifactId>
   <version>0.1-SNAPSHOT</version>
 
-  <name>bpf</name>
+  <name>prfoom</name>
   <url>https://github.com/ecovaci/prfoom</url>
 
   <properties>
@@ -97,6 +97,8 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
+          <finalName>prfoom</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
           <archive>
             <manifest>
               <mainClass>org.kpax.prfoom.Application</mainClass>
