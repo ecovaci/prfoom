@@ -67,9 +67,9 @@ public class ProxyContext implements Closeable {
 
     private PoolingHttpClientConnectionManager connectionManager;
 
-    private volatile SocketConfig socketConfig;
+    private SocketConfig socketConfig;
 
-    private volatile RequestConfig proxyRequestConfig;
+    private RequestConfig proxyRequestConfig;
 
     private Timer connectionEvictionTimer;
 
