@@ -103,11 +103,11 @@ class StreamingHttpEntity extends AbstractHttpEntity {
     public void writeTo(OutputStream outputStream) throws IOException {
 
         // Write the initial buffer
-        // This is repeatable case
+        // This is the repeatable case
         if (bufferedBytes.length > 0) {
             logger.debug("Write initial buffer");
             outputStream.write(bufferedBytes);
-            logger.debug("End Write initial buffer");
+            outputStream.flush();
         }
 
         // Write the remaining bytes when non-repeatable
