@@ -53,7 +53,7 @@ public class SocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(SocketHandler.class);
 
-    private static final List<String> PSEUDO_STREAMING_BANNED_HEADERS = Arrays.asList(HttpHeaders.CONTENT_LENGTH, HttpHeaders.CONTENT_TYPE,
+    private static final List<String> ENTITY_BANNED_HEADERS = Arrays.asList(HttpHeaders.CONTENT_LENGTH, HttpHeaders.CONTENT_TYPE,
             HttpHeaders.CONTENT_ENCODING, HttpHeaders.PROXY_AUTHORIZATION);
 
     private static final List<String> DEFAULT_BANNED_HEADERS = Arrays.asList(HttpHeaders.PROXY_AUTHORIZATION);
@@ -172,11 +172,9 @@ public class SocketHandler {
 
         // Set our streaming entity
         if (request instanceof BasicHttpEntityEnclosingRequest) {
-            BasicHttpEntityEnclosingRequest entityEnclosingRequest = (BasicHttpEntityEnclosingRequest) request;
-            logger.debug("Create StreamingHttpEntity");
-            HttpEntity entity = new PseudoBufferedHttpEntity(inputBuffer, entityEnclosingRequest);
-            entityEnclosingRequest.setEntity(entity);
-            logger.debug("Done configuring entityEnclosingRequest");
+            logger.debug("Create and set PseudoBufferedHttpEntity instance");
+            HttpEntity entity = new PseudoBufferedHttpEntity(inputBuffer, request);
+            ((BasicHttpEntityEnclosingRequest) request).setEntity(entity);
         } else if (logger.isDebugEnabled()) {
             logger.debug("No enclosing entity");
         }
@@ -190,11 +188,14 @@ public class SocketHandler {
 
         try {
             List<String> bannedHeaders = request instanceof BasicHttpEntityEnclosingRequest ?
-                    PSEUDO_STREAMING_BANNED_HEADERS : DEFAULT_BANNED_HEADERS;
+                    ENTITY_BANNED_HEADERS : DEFAULT_BANNED_HEADERS;
             // Remove banned headers
             for (Header header : request.getAllHeaders()) {
                 if (bannedHeaders.contains(header.getName())) {
                     request.removeHeader(header);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Request header {} removed", header);
+                    }
                 } else {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Allow request header {}", header);
@@ -227,7 +228,7 @@ public class SocketHandler {
                             // Strip 'chunked' from Transfer-Encoding header's value
                             String nonChunkedTransferEncoding = HttpUtils.stripChunked(header.getValue());
                             if (nonChunkedTransferEncoding != null && !nonChunkedTransferEncoding.isEmpty()) {
-                                outputStream.write(CrlfFormat.format(HttpUtils.createStrHttpHeader(HttpHeaders.TRANSFER_ENCODING,
+                                outputStream.write(CrlfFormat.format(HttpUtils.createHttpHeaderAsString(HttpHeaders.TRANSFER_ENCODING,
                                         nonChunkedTransferEncoding)));
                                 logger.debug("Add chunk-striped header response");
                             } else {

@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -88,21 +89,23 @@ public final class HttpUtils {
         return Arrays.stream(value.split(",")).filter((item) -> !HTTP.CHUNK_CODING.equalsIgnoreCase(item)).collect(Collectors.joining(","));
     }
 
-    public static String getFirstHeaderValue(HttpRequest request, String name) {
-        Header firstHeader = request.getFirstHeader(name);
-        return firstHeader != null ? firstHeader.getValue() : null;
+    public static Optional<Header> getFirstHeader(HttpRequest request, String name) {
+        return Optional.ofNullable(request.getFirstHeader(name));
+    }
+
+    public static Optional<String> getFirstHeaderValue(HttpRequest request, String name) {
+        return getFirstHeader(request, name).map(h -> h.getValue());
     }
 
     public static long getContentLength(HttpRequest request) {
-        String contentLength = getFirstHeaderValue(request, HttpHeaders.CONTENT_LENGTH);
-        return contentLength != null ? Long.parseLong(contentLength) : -1;
+        return getFirstHeaderValue(request, HttpHeaders.CONTENT_LENGTH).map(Long::parseLong).orElse(-1L);
     }
 
     public static Header createHttpHeader(String name, String value) {
         return new BasicHeader(name, value);
     }
 
-    public static String createStrHttpHeader(String name, String value) {
+    public static String createHttpHeaderAsString(String name, String value) {
         return createHttpHeader(name, value).toString();
     }
 
