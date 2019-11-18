@@ -129,11 +129,11 @@ public class SocketHandler {
                     logger.debug("errorStatusLine {}", errorStatusLine);
 
                     OutputStream localOutputStream = localSocketChannel.getOutputStream();
-                    localOutputStream.write(CrlfFormat.crlf(errorStatusLine.toString()));
+                    localOutputStream.write(CrlfFormat.format(errorStatusLine.toString()));
 
                     logger.debug("Start writing error headers");
                     for (Header header : errorResponse.getAllHeaders()) {
-                        localOutputStream.write(CrlfFormat.crlf(header.toString()));
+                        localOutputStream.write(CrlfFormat.format(header.toString()));
                     }
 
                     // Empty line
@@ -165,7 +165,7 @@ public class SocketHandler {
         if (request instanceof BasicHttpEntityEnclosingRequest) {
             BasicHttpEntityEnclosingRequest entityEnclosingRequest = (BasicHttpEntityEnclosingRequest) request;
             logger.debug("Create StreamingHttpEntity");
-            HttpEntity entity = new StreamingHttpEntity(inputBuffer, entityEnclosingRequest);
+            HttpEntity entity = new PseudoBufferedHttpEntity(inputBuffer, entityEnclosingRequest);
             entityEnclosingRequest.setEntity(entity);
             logger.debug("Done configuring entityEnclosingRequest");
         }
@@ -207,7 +207,7 @@ public class SocketHandler {
                     logger.debug("Response status line: {}", statusLine);
 
                     OutputStream outputStream = localSocketChannel.getOutputStream();
-                    outputStream.write(CrlfFormat.crlf(statusLine));
+                    outputStream.write(CrlfFormat.format(statusLine));
 
                     logger.debug("Start writing response headers");
                     for (Header header : response.getAllHeaders()) {
@@ -216,7 +216,7 @@ public class SocketHandler {
                             // Strip 'chunked' from Transfer-Encoding header's value
                             String nonChunkedTransferEncoding = HttpUtils.stripChunked(header.getValue());
                             if (nonChunkedTransferEncoding != null && !nonChunkedTransferEncoding.isEmpty()) {
-                                outputStream.write(CrlfFormat.crlf(HttpUtils.createStrHttpHeader(HttpHeaders.TRANSFER_ENCODING,
+                                outputStream.write(CrlfFormat.format(HttpUtils.createStrHttpHeader(HttpHeaders.TRANSFER_ENCODING,
                                         nonChunkedTransferEncoding)));
                                 logger.debug("Add chunk-striped header response");
                             } else {
@@ -225,7 +225,7 @@ public class SocketHandler {
                         } else {
                             String strHeader = header.toString();
                             logger.debug("Write response header: {}", strHeader);
-                            outputStream.write(CrlfFormat.crlf(strHeader));
+                            outputStream.write(CrlfFormat.format(strHeader));
                         }
                     }
 

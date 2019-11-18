@@ -24,9 +24,9 @@ public final class CrlfFormat {
     private CrlfFormat() {
     }
 
-    public static byte[] crlf(String input) {
+    public static byte[] format(String input) {
         if (input != null) {
-            return (input + CRLF).getBytes();
+            return new StringBuilder (input).append(CRLF).toString().getBytes();
         }
         return CRLF.getBytes();
     }

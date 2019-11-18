@@ -29,13 +29,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * A pseudo-buffered (i.e. buffered under some conditions) entity.
+ * This entity is buffered iff is repeatable.
+ *
  * @author Eugen Covaci
  */
-class StreamingHttpEntity extends AbstractHttpEntity {
+class PseudoBufferedHttpEntity extends AbstractHttpEntity {
 
-    private static final Logger logger = LoggerFactory.getLogger(StreamingHttpEntity.class);
+    private static final Logger logger = LoggerFactory.getLogger(PseudoBufferedHttpEntity.class);
 
-    private static final int INTERNAL_BUFFER_LENGTH = 100 * 1024;
+    private static final int INTERNAL_BUFFER_LENGTH = 100 * 1024;// FIXME Should  be a config parameter
 
     private final SessionInputBufferImpl inputBuffer;
 
@@ -49,7 +52,7 @@ class StreamingHttpEntity extends AbstractHttpEntity {
 
     private boolean repeatable;
 
-    StreamingHttpEntity(SessionInputBufferImpl inputBuffer, HttpRequest request)
+    PseudoBufferedHttpEntity(SessionInputBufferImpl inputBuffer, HttpRequest request)
             throws IOException {
         this.inputBuffer = inputBuffer;
         this.contentType = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
@@ -119,11 +122,23 @@ class StreamingHttpEntity extends AbstractHttpEntity {
 
     }
 
+    /**
+     * It relies on repeatable flag.
+     * If <code>true</code>, then the entity is buffered,
+     * otherwise it reads bytes from a socket.
+     *
+     * @return <code>true</code> if and only if {@link #repeatable} is <code>false</code>.
+     */
     @Override
     public boolean isStreaming() {
-        return true;
+        return !repeatable;
     }
 
+    /**
+     * Whether this entity is repeatable.
+     * @return  <code>true</code> iff {@link #contentLength} <code>< 0</code> and available bytes less than internal buffer's length
+     * or {@link #contentLength} less than internal buffer's length.
+     */
     @Override
     public boolean isRepeatable() {
         return repeatable;
