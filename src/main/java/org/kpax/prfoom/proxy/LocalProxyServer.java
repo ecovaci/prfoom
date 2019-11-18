@@ -32,6 +32,7 @@ import java.nio.channels.CompletionHandler;
 
 /**
  * The local proxy server.
+ * We rely on the Spring context to close this instance!
  *
  * @author Eugen Covaci
  */
@@ -69,7 +70,6 @@ public class LocalProxyServer implements Closeable {
         }
         logger.info("Start local proxy server with userConfig {}", userConfig);
         try {
-            proxyContext.start();
             serverSocket = AsynchronousServerSocketChannel.open()
                     .bind(new InetSocketAddress(userConfig.getLocalPort()));
             serverSocket.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
@@ -80,7 +80,9 @@ public class LocalProxyServer implements Closeable {
                     } catch (Exception e) {
                         logger.error("Error on accepting the next connection", e);
                     }
-                    // handle this connection
+
+                    // Handle this connection.
+                    // Tune the socket for better performance.
                     try {
                         applicationContext.getBean(SocketHandler.class)
                                 .bind(socketChanel.setOption(StandardSocketOptions.TCP_NODELAY, true)
@@ -95,11 +97,14 @@ public class LocalProxyServer implements Closeable {
                 }
 
                 public void failed(Throwable exc, Void att) {
+
+                    // Ignore java.nio.channels.AsynchronousCloseException error
                     if (!(exc instanceof AsynchronousCloseException)) {
                         logger.warn("SocketServer failed", exc);
                     }
                 }
             });
+            proxyContext.start();
             started = true;
             logger.info("Server started, listening on port: " + userConfig.getLocalPort());
         } catch (Exception e) {

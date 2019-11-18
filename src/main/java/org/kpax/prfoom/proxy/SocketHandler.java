@@ -53,8 +53,10 @@ public class SocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(SocketHandler.class);
 
-    private static final List<String> BANNED_REQUEST_HEADERS = Arrays.asList(HttpHeaders.CONTENT_LENGTH, HttpHeaders.CONTENT_TYPE,
+    private static final List<String> PSEUDO_STREAMING_BANNED_HEADERS = Arrays.asList(HttpHeaders.CONTENT_LENGTH, HttpHeaders.CONTENT_TYPE,
             HttpHeaders.CONTENT_ENCODING, HttpHeaders.PROXY_AUTHORIZATION);
+
+    private static final List<String> DEFAULT_BANNED_HEADERS = Arrays.asList(HttpHeaders.PROXY_AUTHORIZATION);
 
     @Autowired
     private SystemConfig systemConfig;
@@ -84,7 +86,7 @@ public class SocketHandler {
             SessionInputBufferImpl inputBuffer = new SessionInputBufferImpl(metrics, LocalIOUtils.DEFAULT_BUFFER_SIZE);
             inputBuffer.bind(localSocketChannel.getInputStream());
 
-            // Parse the request
+            // Parse the request (all but the message body )
             HttpMessageParser<HttpRequest> requestParser = new DefaultHttpRequestParser(inputBuffer);
             HttpRequest request = requestParser.parse();
             RequestLine requestLine = request.getRequestLine();
@@ -107,6 +109,13 @@ public class SocketHandler {
 
     }
 
+    /**
+     * Creates a tunnel through proxy, then let the client and the remote proxy
+     * communicate via the local socket channel instance.
+     *
+     * @param requestLine The first line of the request.
+     * @throws Exception
+     */
     private void handleConnect(RequestLine requestLine) throws Exception {
         URI uri = HttpUtils.parseConnectUri(requestLine.getUri());
         logger.debug("Handle proxy connect request");
@@ -168,6 +177,8 @@ public class SocketHandler {
             HttpEntity entity = new PseudoBufferedHttpEntity(inputBuffer, entityEnclosingRequest);
             entityEnclosingRequest.setEntity(entity);
             logger.debug("Done configuring entityEnclosingRequest");
+        } else if (logger.isDebugEnabled()) {
+            logger.debug("No enclosing entity");
         }
 
         final boolean retryRequest = !(request instanceof BasicHttpEntityEnclosingRequest)
@@ -178,13 +189,15 @@ public class SocketHandler {
         CloseableHttpClient httpClient = proxyContext.getHttpClientBuilder(retryRequest);
 
         try {
+            List<String> bannedHeaders = request instanceof BasicHttpEntityEnclosingRequest ?
+                    PSEUDO_STREAMING_BANNED_HEADERS : DEFAULT_BANNED_HEADERS;
             // Remove banned headers
             for (Header header : request.getAllHeaders()) {
-                if (BANNED_REQUEST_HEADERS.contains(header.getName())) {
+                if (bannedHeaders.contains(header.getName())) {
                     request.removeHeader(header);
                 } else {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Add request header {}", header);
+                        logger.debug("Allow request header {}", header);
                     }
                 }
             }
@@ -192,7 +205,6 @@ public class SocketHandler {
             // Execute the request
             try {
                 HttpHost target = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-
                 CloseableHttpResponse response;
                 if (retryRequest) {
                     response = new CloseableRepeater<CloseableHttpResponse>().repeat(() -> httpClient.execute(target, request),
@@ -201,7 +213,6 @@ public class SocketHandler {
                 } else {
                     response = httpClient.execute(target, request);
                 }
-
                 try {
                     String statusLine = response.getStatusLine().toString();
                     logger.debug("Response status line: {}", statusLine);

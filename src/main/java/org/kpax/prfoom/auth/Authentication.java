@@ -5,12 +5,8 @@ import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.kpax.prfoom.UserConfig;
-import org.kpax.prfoom.util.LazyInitializer;
-import org.kpax.prfoom.util.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 /**
  * @author Eugen Covaci {@literal eugen.covaci.q@gmail.com}

@@ -24,7 +24,6 @@ import org.kpax.prfoom.ExitCodes;
 import org.kpax.prfoom.SystemConfig;
 import org.kpax.prfoom.UiConfig;
 import org.kpax.prfoom.UserConfig;
-import org.kpax.prfoom.exception.CommandExecutionException;
 import org.kpax.prfoom.proxy.LocalProxyServer;
 import org.kpax.prfoom.util.HttpUtils;
 import org.kpax.prfoom.util.SwingUtils;
@@ -44,7 +43,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 
 @Component
 public class AppFrame extends JFrame {

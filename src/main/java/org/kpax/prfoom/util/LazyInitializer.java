@@ -11,7 +11,7 @@ public interface LazyInitializer<T> {
 
     T supplier();
 
-    default  T createIfNull (T t) {
+    default T createIfNull(T t) {
         synchronized (this) {
             return Optional.of(t).orElse(supplier());
         }

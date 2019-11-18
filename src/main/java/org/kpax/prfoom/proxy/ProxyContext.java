@@ -18,14 +18,14 @@ import org.apache.http.HeaderElement;
 import org.apache.http.HeaderElementIterator;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.impl.client.*;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.ProxyAuthenticationStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.protocol.HTTP;
@@ -47,6 +47,9 @@ import java.util.TimerTask;
 import java.util.concurrent.*;
 
 /**
+ * It provides a thread pool, a HTTP connection manager etc. mostly for the {@link SocketHandler} instance.<br/>
+ * We rely on the Spring context to close this instance!
+ *
  * @author Eugen Covaci
  */
 @Component
@@ -76,13 +79,16 @@ public class ProxyContext implements Closeable {
     @PostConstruct
     public void init() {
         logger.info("Create thread pool");
-        threadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-                Thread t = Executors.defaultThreadFactory().newThread(r);
-                t.setDaemon(true);
-                return t;
-            }
-        });
+
+        // All threads are daemons!
+        threadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                new ThreadFactory() {
+                    public Thread newThread(Runnable r) {
+                        Thread t = Executors.defaultThreadFactory().newThread(r);
+                        t.setDaemon(true);
+                        return t;
+                    }
+                });
 
         logger.info("Create pooling connection manager");
         connectionManager = new PoolingHttpClientConnectionManager();
@@ -102,13 +108,13 @@ public class ProxyContext implements Closeable {
      * After this method call, the proxy should be ready
      * for handling HTTP(s) requests.
      */
-    public void start () {
+    public void start() {
         if (systemConfig.isEvictionEnabled()) {
             logger.info("Create connection eviction timer");
             connectionEvictionTimer = new Timer();
             connectionEvictionTimer.schedule(new EvictionTask(), 0, systemConfig.getEvictionPeriod() * 1000);
         }
-        logger.info("Proxy context started");
+        logger.info("Proxy context is ready");
     }
 
     public CloseableHttpClient getHttpClientBuilder(boolean retries) {

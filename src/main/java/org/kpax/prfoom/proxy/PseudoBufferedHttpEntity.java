@@ -136,7 +136,8 @@ class PseudoBufferedHttpEntity extends AbstractHttpEntity {
 
     /**
      * Whether this entity is repeatable.
-     * @return  <code>true</code> iff {@link #contentLength} <code>< 0</code> and available bytes less than internal buffer's length
+     *
+     * @return <code>true</code> iff {@link #contentLength} <code>< 0</code> and available bytes less than internal buffer's length
      * or {@link #contentLength} less than internal buffer's length.
      */
     @Override
